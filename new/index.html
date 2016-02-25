@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+            body { margin: 0; padding: 0; overflow: hidden;}
+            #ThreeJS { width: 100%; height: 100% }
+        </style>
+        <script src="three.min.js"></script>
+        <script src="js/renderers/Projector.js"></script>
+        <script src="js/renderers/CanvasRenderer.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+
+
+        <script src="js/libs/stats.min.js"></script>
+
+
+    </head>
+
+    <body>
+        <div id="ThreeJS"></div>
+
+
+
+
+        <script type="text/javascript">
+            var container, scene, camera, renderer, controls;
+
+            var stats;
+
+
+            function init(){
+
+                var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+                /**
+                 * NEAR - A PARTIR DE QUAL PROXIMIDADE A CAMERA IRÁ REGISTRAR
+                 * FAR - LIMITE DE PROFUNDIDADE QUE SUA CAMERA IRÁ REGISTRAR
+                 */
+
+                var VIEW_ANGLE = 50, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 2000;
+
+                /**
+                 * CRIANDO A CENA E A CAMERA
+                 */
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+                camera.position.z = 1000;
+
+
+                renderer = new THREE.WebGLRenderer( {antialias:true} );
+                renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+                container = document.getElementById( 'ThreeJS' );
+                container.appendChild( renderer.domElement );
+
+                /*
+                 * ADICIONANDO CONTROLE DE ORBITA
+                 */
+                controls = new THREE.OrbitControls( camera, renderer.domElement );
+                controls.maxDistance = 1600;
+
+                /**
+                 * CRIANDO A TEXTURA DO CUBO POR FOTOS
+                 */
+                var path = "textures/hyundai/";
+                var format = '.jpg';
+                var urls = [
+                        path + '3' + format, path + '1' + format,
+                        path + '4' + format, path + '5' + format,
+                        path + '2' + format, path + '0' + format
+                    ];
+
+                var reflectionCube = new THREE.CubeTextureLoader().load( urls );
+                reflectionCube.format = THREE.RGBFormat;
+
+                // Skybox
+
+                var shader = THREE.ShaderLib[ "cube" ];
+                shader.uniforms[ "tCube" ].value = reflectionCube;
+
+                var material = new THREE.ShaderMaterial( {
+
+                    fragmentShader: shader.fragmentShader,
+                    vertexShader: shader.vertexShader,
+                    uniforms: shader.uniforms,
+                    depthWrite: false,
+                    side: THREE.BackSide
+
+                } );
+
+
+
+                /**
+                 * ADICIONANDO O CUBO
+                 */
+
+                var skyboxGeom = new THREE.CubeGeometry( 500, 500, 500, 1, 1, 1 );
+                var skybox = new THREE.Mesh( skyboxGeom, material );
+                scene.add( skybox );
+
+                /**
+                 * MONITOR DE FRAMES
+                 */
+                stats = new Stats();
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '0px';
+                stats.domElement.style.zIndex = 100;
+                container.appendChild( stats.domElement );
+
+                window.addEventListener( 'resize', onWindowResize, false );
+
+            }
+
+            function onWindowResize(){
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+
+
+            function animate(){
+                requestAnimationFrame( animate );
+                render();
+                update();
+            }
+
+            function update()
+            {
+                controls.update();
+                stats.update();
+            }
+
+            function render(){
+                renderer.render( scene, camera );
+            }
+
+            init();
+            animate();
+        </script>
+    </body>
+
+</html>
